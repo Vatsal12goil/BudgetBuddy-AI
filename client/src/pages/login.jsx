@@ -18,6 +18,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const showToast = (type, title, msg) => {
     setToast({ type, title, msg });
@@ -30,6 +31,9 @@ export default function Login() {
       return;
     }
 
+    if (isLoggingIn) return;
+
+    setIsLoggingIn(true);
     try {
       const res = await api.post("/login", {
         email,
@@ -72,6 +76,8 @@ export default function Login() {
         "Login Failed",
         err.response?.data?.detail || "Invalid Credentials"
       );
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -271,8 +277,12 @@ export default function Login() {
               </label>
             </div>
 
-            <button type="submit" className="btn">
-              Sign In
+            <button type="submit" className="btn" disabled={isLoggingIn} aria-busy={isLoggingIn}>
+              {isLoggingIn ? (
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9 }}>
+                  <span className="loading-spinner" aria-hidden="true" /> Signing in…
+                </span>
+              ) : "Sign In"}
             </button>
           </form>
 
