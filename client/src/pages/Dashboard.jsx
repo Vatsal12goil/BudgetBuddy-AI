@@ -64,6 +64,7 @@ export default function Dashboard() {
   });
   const [notifications, setNotifications] = useState([]);
   const [dashboardError, setDashboardError] = useState("");
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [analytics, setAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [analyticsError, setAnalyticsError] = useState("");
@@ -77,6 +78,7 @@ export default function Dashboard() {
   const [profileMessage, setProfileMessage] = useState("");
 
   const loadData = async () => {
+  setLoadingDashboard(true);
   try {
     setDashboardError("");
     const me = await api.get("/me", {
@@ -224,6 +226,8 @@ export default function Dashboard() {
     console.error("FAILED API:", err.response?.config?.url);
     console.error(err.response?.data || err);
     setDashboardError("Failed to load dashboard data. Please try again.");
+  } finally {
+    setLoadingDashboard(false);
   }
 };
 
@@ -824,6 +828,10 @@ const addExpense = async () => {
       </button>
     </div>
   </div>
+        {loadingDashboard ? (
+          <DashboardSkeleton />
+        ) : (
+          <>
         {/* Notifications */}
         {notifications.length > 0 && (
           <div style={{ marginTop: 20 }}>
@@ -2196,8 +2204,56 @@ const addExpense = async () => {
 )}
   </div>
 )}
+          </>
+        )}
       </main>
     </div>
+  );
+}
+
+function DashboardSkeleton() {
+  const block = (width = "100%", height = 16) => ({
+    width,
+    height,
+    borderRadius: 8,
+    background: "linear-gradient(90deg, #e9e7f5 25%, #f7f6fc 50%, #e9e7f5 75%)",
+    backgroundSize: "200% 100%",
+    animation: "budgetbuddy-shimmer 1.4s ease-in-out infinite",
+  });
+
+  return (
+    <section aria-label="Loading dashboard" aria-busy="true" style={{ marginTop: 26 }}>
+      <style>{`@keyframes budgetbuddy-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      @media (prefers-reduced-motion: reduce) { .budgetbuddy-skeleton { animation: none !important; } }`}</style>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 18 }}>
+        {[1, 2, 3, 4].map((item) => (
+          <div key={item} style={{ background: "#fff", borderRadius: 16, padding: 22, boxShadow: "0 8px 20px rgba(0,0,0,.05)" }}>
+            <div style={block("55%", 12)} />
+            <div style={{ ...block("72%", 28), marginTop: 18 }} />
+            <div style={{ ...block("42%", 10), marginTop: 14 }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginTop: 22 }}>
+        {[1, 2].map((item) => (
+          <div key={item} style={{ background: "#fff", borderRadius: 16, padding: 24, boxShadow: "0 8px 20px rgba(0,0,0,.05)" }}>
+            <div style={block("45%", 18)} />
+            <div style={{ ...block("100%", 170), marginTop: 24, borderRadius: 12 }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 24, marginTop: 22, boxShadow: "0 8px 20px rgba(0,0,0,.05)" }}>
+        <div style={block("35%", 18)} />
+        {[1, 2, 3, 4].map((item) => (
+          <div key={item} style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 22 }}>
+            <div style={block(36, 36)} />
+            <div style={{ flex: 1 }}><div style={block("70%", 12)} /></div>
+            <div style={block("16%", 12)} />
+          </div>
+        ))}
+      </div>
+      <p style={{ color: "#777", textAlign: "center", marginTop: 18 }}>Loading your BudgetBuddy data…</p>
+    </section>
   );
 }
 
