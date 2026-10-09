@@ -81,50 +81,30 @@ export default function Dashboard() {
   setLoadingDashboard(true);
   try {
     setDashboardError("");
-    const me = await api.get("/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("ME", me.data);
-
     const monthParams = { params: { month: selectedMonth } };
+    const authConfig = { headers: { Authorization: `Bearer ${token}` } };
 
-    const dash = await api.get("/dashboard", {
-      ...monthParams,
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("DASH", dash.data);
-
-    const budget = await api.get("/budget", {
-      ...monthParams,
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("BUDGET", budget.data);
-
-    const expenseData = await api.get("/expenses", {
-      ...monthParams,
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("EXPENSE", expenseData.data);
-
-    const incomeData = await api.get("/income", {
-      ...monthParams,
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("INCOME", incomeData.data);
-
-    const goalData = await api.get("/goals", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("GOALS", goalData.data);
-
-    const notificationData = await api.get("/notifications", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const profileData = await api.get("/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("NOTIFY", notificationData.data);
+    // These requests are independent, so run them concurrently instead of
+    // making the user wait for each endpoint one after another.
+    const [
+      me,
+      dash,
+      budget,
+      expenseData,
+      incomeData,
+      goalData,
+      notificationData,
+      profileData,
+    ] = await Promise.all([
+      api.get("/me", authConfig),
+      api.get("/dashboard", { ...monthParams, ...authConfig }),
+      api.get("/budget", { ...monthParams, ...authConfig }),
+      api.get("/expenses", { ...monthParams, ...authConfig }),
+      api.get("/income", { ...monthParams, ...authConfig }),
+      api.get("/goals", authConfig),
+      api.get("/notifications", authConfig),
+      api.get("/profile", authConfig),
+    ]);
 
     // Build the selected month's category budget view from the
     // already month-filtered budget and expense responses.
@@ -175,16 +155,11 @@ export default function Dashboard() {
     setLoadingAnalytics(true);
 
     try {
-      // Main analytics data
-      const analyticsRes = await api.get("/analytics", {
-        ...monthParams,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      // Monthly trends data
-      const trendsRes = await api.get("/analytics/trends", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Both analytics endpoints are independent; fetch them together.
+      const [analyticsRes, trendsRes] = await Promise.all([
+        api.get("/analytics", { ...monthParams, ...authConfig }),
+        api.get("/analytics/trends", authConfig),
+      ]);
 
       const analyticsData = analyticsRes.data;
 
